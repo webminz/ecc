@@ -3,13 +3,14 @@ package main;
 import java.math.BigInteger;
 
 import main.common.LegendreSymbol;
+import main.common.Tuple;
 import main.complex.Schoof;
 
 public class ECC {
 
 
 	// return type key pair
-	 public void generateKeys() throws Exception {
+	 public Tuple<Tuple<BigInteger, Point>, Tuple<Point, BigInteger>> generateKeys() throws Exception {
 		BigInteger n = BigInteger.ONE;
 		int security = 100;
 
@@ -19,11 +20,10 @@ public class ECC {
 		BigInteger p;
 		do {
 			p = NumberGeneration.generateFieldPrime(8, security);
-			System.out.println("i survived prime search");
+			System.out.println("P ist 5 mod 8: "+ p.mod(BigInteger.valueOf(8)).equals(BigInteger.valueOf(5)));
 			E = new EllipticCurve(new Field(p), n.multiply(n), BigInteger.ZERO);
 			 N = Schoof.getOrder(p, n);
-		} while (n.divide(BigInteger.valueOf(8)).isProbablePrime(security));
-		System.out.println("We are goin deeper");
+		} while (!N.divide(BigInteger.valueOf(8)).isProbablePrime(security));
 //		Tuple<BigInteger, BigInteger> x_and_r = this.checkQuadraticRoot(p);
 		BigInteger r;
 		BigInteger x, y;
@@ -31,32 +31,37 @@ public class ECC {
 			x = NumberGeneration.generateRandomNumberBelow(p);
 			r = E.resolveRightSide(x);
 			if (!LegendreSymbol.isQuadraticResidue(r, p)) {
+				System.out.println("f1");
 				continue;
 			}
 			if (! r.modPow(p.subtract(BigInteger.ONE).divide(BigInteger.valueOf(4)), p).equals(BigInteger.ONE) || r.modPow(p.subtract(BigInteger.ONE).divide(BigInteger.valueOf(4)), p).equals(BigInteger.valueOf(-1))) {
+				System.out.println("f2");
 				continue;
 			}
 			y = this.checkQuadraticRoot(r, p);
 			break;
 		} while (true);
 		NPoint g = new NPoint(x, y);
+		System.out.println("g:" + g);
 		main.Point px = E.mul(g, BigInteger.valueOf(9));
 		if (E.isInfinitePoint(px)) {
+			System.out.println("mist");
 			// choose new x,y
 		}
-		System.out.println("we are nearly therre");
 		BigInteger privateX= NumberGeneration.generateRandomNumberBelow(N.divide(BigInteger.valueOf(8)));
+		System.out.println("hier");
 		Point publicY = E.mul(g, privateX);
-		System.out.println("We did it");
-		System.out.println(p);
-		System.out.println(g);
-		System.out.println(publicY);
-		System.out.println(x);
+		System.out.println("N: "+N );
+		System.out.println("N/8 in P: "+  n.divide(BigInteger.valueOf(8)).isProbablePrime(100));
+		System.out.println("p: "+p);
+		System.out.println("g: "+g);
+		System.out.println("y: "+publicY);
+		System.out.println("x: "+privateX);
 		// return E, p , g, y public and x private
-
+		return new Tuple<Tuple<BigInteger,Point>, Tuple<Point,BigInteger>>(new Tuple<BigInteger, Point>(p, g), new Tuple<Point, BigInteger>(publicY, privateX));
 	}
 
-	public void encode(final EllipticCurve e, final BigInteger p, final Point g, final Point y, final BigInteger m1, final BigInteger m2) throws Exception {
+	public Tuple<Tuple<BigInteger, BigInteger>, Point> encode(final EllipticCurve e, final BigInteger p, final Point g, final Point y, final BigInteger m1, final BigInteger m2) throws Exception {
 		BigInteger k = BigInteger.ZERO;
 		Point ky = new NPoint(BigInteger.ZERO, BigInteger.ZERO);
 		boolean isNotOk = true;
@@ -89,6 +94,7 @@ public class ECC {
 		System.out.println(b2);
 		System.out.println(a);
 		// return a, b1, b2 as Message
+		return new Tuple<Tuple<BigInteger,BigInteger>, Point>(new Tuple<BigInteger , BigInteger>(b1, b2), a);
 	}
 
 	public void decode(final EllipticCurve e, final BigInteger p,final BigInteger b1, final BigInteger b2, final Point a, final BigInteger x) throws Exception {
@@ -99,8 +105,8 @@ public class ECC {
 		} else {
 			throw new Error("Fuck you");
 		}
-		BigInteger m1 = b1.multiply(xan.getX().modInverse(p));
-		BigInteger m2 = b1.multiply(xan.getY().modInverse(p));
+		BigInteger m1 = b1.multiply(xan.getX().modInverse(p)).mod(p);
+		BigInteger m2 = b2.multiply(xan.getY().modInverse(p)).mod(p);
 		System.out.println(m1);
 		System.out.println(m2);
 	}
