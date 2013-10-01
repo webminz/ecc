@@ -1,11 +1,12 @@
 package test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
 import java.util.Random;
 
 import main.NumberGeneration;
+import main.common.Tuple;
 
 import org.junit.Test;
 
@@ -16,26 +17,27 @@ public class MillerRabinTests {
 		for (int i = 3; i < 2000; i++) {
 			System.out.println(i);
 			BigInteger a = BigInteger.valueOf(i);
-			BigInteger[] res = NumberGeneration.divideBy2TillEnd(a);
+			Tuple<Integer, BigInteger> res = NumberGeneration.divideBy2TillEnd(a);
 
-			System.out.println("res="+res[0] + ";" + res[1]);
-			assertTrue(!res[1].divideAndRemainder(BigInteger.valueOf(2))[1].equals(BigInteger.ZERO));
-			assertTrue(BigInteger.valueOf(2).pow(res[0].intValue()).multiply(res[1]).equals(a));
+			System.out.println("res="+res.getFirst()+ ";" + res.getSecond());
+			assertTrue(!res.getSecond().divideAndRemainder(BigInteger.valueOf(2))[1].equals(BigInteger.ZERO));
+			assertTrue(BigInteger.valueOf(2).pow(res.getFirst()).multiply(res.getSecond()).equals(a));
 
 		}
 	}
-	
+
 	@Test
 	public void testBigIntegerPrime() {
-		for (int i =0 ; i <10 ; i++)
-		System.out.println(BigInteger.probablePrime(1024, new Random()));
+		for (int i =0 ; i <10 ; i++) {
+			System.out.println(BigInteger.probablePrime(1024, new Random()));
+		}
 	}
 	@Test
 	public void testOurPrime() {
 //		for (int i =0 ; i <10 ; i++)
 		System.out.println(NumberGeneration.generateProbablePrime(1024, 100));
 	}
-	
+
 	@Test
 	public void testIsPrime() throws Exception {
 		for (int i = 10; i< 100000; i++) {
@@ -45,17 +47,24 @@ public class MillerRabinTests {
 			}
 		}
 	}
-	
+
 	@Test
 	public void testTiestest() throws Exception {
 		BigInteger a = BigInteger.valueOf(8);
 		System.out.println(a.shiftRight(1));
 		System.out.println(a.testBit(0));
 	}
-	
+
 	@Test
 	public void testNumberBelow() throws Exception {
 		System.out.println(NumberGeneration.generateRandomNumberBelow(BigInteger.valueOf(6)));
+	}
+
+	@Test
+	public void testGeneration() throws Exception {
+		BigInteger n = NumberGeneration.generateProbablePrime(1023, 5);
+		System.out.println(n);
+		System.out.println(n.isProbablePrime(100));
 	}
 
 }

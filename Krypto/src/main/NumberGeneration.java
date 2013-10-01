@@ -4,9 +4,12 @@ import java.math.BigInteger;
 import java.util.Random;
 
 import main.common.LegendreSymbol;
+import main.common.Tuple;
 
 public class NumberGeneration {
 
+	private static final BigInteger BIG_INT_MINUS_ONE = BigInteger.valueOf(-1);
+	private static final BigInteger BIG_INT_SIX = BigInteger.valueOf(6);
 	private static final BigInteger BIGINT_TWO = BigInteger.valueOf(2);
 	private static Random random = new Random();
 
@@ -24,8 +27,8 @@ public class NumberGeneration {
 				continue;
 			}
 			System.out.println("new p"+p);
-			Integer randomOneOrMinOne = random.nextBoolean() ? 1 : -1;
-			p = BigInteger.valueOf(6).multiply(p).add(BigInteger.valueOf(randomOneOrMinOne));
+			BigInteger randomOneOrMinOne = random.nextBoolean() ? BigInteger.ONE : BIG_INT_MINUS_ONE;
+			p = BIG_INT_SIX.multiply(p).add(randomOneOrMinOne);
 		} while (! isProbablePrime(p, security));
 		return p;
 	}
@@ -54,21 +57,25 @@ public class NumberGeneration {
 	 * @param n
 	 * @return
 	 */
-	private static boolean doTest(final BigInteger a, final BigInteger n) {
-		BigInteger[] sd = divideBy2TillEnd(n.subtract(BigInteger.ONE));
-		BigInteger s = sd[0];
-		BigInteger d = sd[1];
-		if (a.modPow(d, n).equals(BigInteger.ONE)) {
+	public static boolean doTest(final BigInteger a, final BigInteger n) {
+		BigInteger n_minus_1 = n.subtract(BigInteger.ONE);
+		Tuple<Integer, BigInteger> sd = divideBy2TillEnd(n_minus_1);
+		int s = sd.getFirst();
+		System.out.println("s:" + s);
+		BigInteger d = sd.getSecond();
+		System.out.println("d:" + d);
+		BigInteger a_pow_d  = a.modPow(d, n);
+		if (a_pow_d.equals(BigInteger.ONE)) {
 			return true;
 		}
-		BigInteger n_minus_1 = n.subtract(BigInteger.ONE);
-		BigInteger a_pow_d = a.modPow(d, n);
-		BigInteger a_squared = a.multiply(a);
-		for (BigInteger r = BigInteger.ZERO; r.compareTo(s) < 0; r = r.add(BigInteger.ONE)) {
+		for (int r = 0; r < s;  r++) {
 			if (a_pow_d.equals(n_minus_1)) {
 				return true;
 			}
-			a_pow_d = a_pow_d.multiply(a_squared).mod(n);
+			a_pow_d = a_pow_d.multiply(a_pow_d).mod(n);
+		}
+		if (a_pow_d.equals(n_minus_1)) {
+			return true;
 		}
 		return false;
 
@@ -88,7 +95,7 @@ public class NumberGeneration {
 	 * @param num number >= 1
 	 * @return {s,d}
 	 */
-	public static BigInteger[] divideBy2TillEnd(final BigInteger num) {
+	public static Tuple<Integer, BigInteger> divideBy2TillEnd(final BigInteger num) {
 //		BigInteger s = BigInteger.ZERO;
 //		while (true) {
 //			if (!num.testBit(0)) { 		// is even?
@@ -99,7 +106,7 @@ public class NumberGeneration {
 //			}
 //		}
 		int s = num.getLowestSetBit();
-		return new BigInteger[] {BigInteger.valueOf(s), num.shiftRight(s)};
+		return new Tuple<Integer, BigInteger>(s, num.shiftRight(s));
 	}
 
 	public static BigInteger generateA(final BigInteger n) {
